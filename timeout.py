@@ -34,12 +34,7 @@ sourcelookup = geolite2.lookup(sourceip)
 
 # calculate timeout from location
 if remotelookup is not None and sourcelookup is not None :
-	remotelat = remotelookup.location[0]
-	remotelong = remotelookup.location[1]
-	sourcelat = sourcelookup.location[0]
-	sourcelong = sourcelookup.location[1]
-	distance = distance_on_unit_sphere(remotelat, remotelong, sourcelat, sourcelong)
-	
+	distance = distance_on_unit_sphere(remotelookup.location[0], remotelookup.location[1], sourcelookup.location[0], sourcelookup.location[1])
 	# multiplier for calculating timeout
 	ftptimeout = distance*4
 
