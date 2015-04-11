@@ -1,8 +1,7 @@
 # imports
 import math
-import string
 import socket
-import pprint
+
 from ftplib import FTP
 from geoip import geolite2
  
@@ -26,6 +25,7 @@ remoteip = '149.172.37.26'
 # bogus ip for testing
 # china
 sourceip = '58.51.177.92'
+# sourceip = socket.gethostbyname(socket.gethostname())
 ftptimeout = 1
 
 # determine location
@@ -34,19 +34,16 @@ sourcelookup = geolite2.lookup(sourceip)
 
 # calculate timeout from location
 if remotelookup is not None and sourcelookup is not None :
-	remotelocations = str(remotelookup.location).split(",")
-	remotelat = float(remotelocations[0].replace("(",""))
-	remotelong = float(remotelocations[1].replace(")",""))
-	
-	sourcelocations = str(sourcelookup.location).split(",")
-	sourcelat = float(sourcelocations[0].replace("(",""))
-	sourcelong = float(sourcelocations[1].replace(")",""))
-	
+	remotelat = remotelookup.location[0]
+	remotelong = remotelookup.location[1]
+	sourcelat = sourcelookup.location[0]
+	sourcelong = sourcelookup.location[1]
 	distance = distance_on_unit_sphere(remotelat, remotelong, sourcelat, sourcelong)
+	
 	# multiplier for calculating timeout
 	ftptimeout = distance*4
 
-	print "Ftp timeout: %s" % ftptimeout
+print "Ftp timeout: %s" % ftptimeout
 
 # set timeout for fast processing
 ftp = FTP(host=remoteip, timeout=ftptimeout)
