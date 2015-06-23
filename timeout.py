@@ -1,10 +1,15 @@
 # imports
 import math
 import socket
+import pprint
 
 from ftplib import FTP
 from geoip import geolite2
- 
+
+# config
+remoteip = '149.172.37.26'
+ftptimeout = 1
+
 # compare long lat for distance
 def distance_on_unit_sphere(lat1, long1, lat2, long2):
     degrees_to_radians = math.pi/180.0
@@ -12,21 +17,14 @@ def distance_on_unit_sphere(lat1, long1, lat2, long2):
     phi2 = (90.0 - lat2)*degrees_to_radians
     theta1 = long1*degrees_to_radians
     theta2 = long2*degrees_to_radians
-    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + 
+    cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) +
            math.cos(phi1)*math.cos(phi2))
     arc = math.acos( cos )
     return arc
 
-# germany
-remoteip = '149.172.37.26'
-# original ip
+# original ip (make sure it is a ip near your location)
 # sourceip = socket.gethostbyname(socket.gethostname())
-# 
-# bogus ip for testing
-# china
-sourceip = '58.51.177.92'
-# sourceip = socket.gethostbyname(socket.gethostname())
-ftptimeout = 1
+sourceip = '62.197.131.200'
 
 # determine location
 remotelookup = geolite2.lookup(remoteip)
@@ -38,10 +36,13 @@ if remotelookup is not None and sourcelookup is not None :
 	# multiplier for calculating timeout
 	ftptimeout = distance*4
 
-print "Ftp timeout: %s" % ftptimeout
-
 # set timeout for fast processing
-ftp = FTP(host=remoteip, timeout=ftptimeout)
-ftp.login()
-ftp.retrlines('LIST')
-ftp.quit()
+try:
+    ftp = FTP(host=remoteip, timeout=ftptimeout)
+    ftp.login()
+    ftp.retrlines('LIST')
+    ftp.quit()
+
+    print("Generated timeout: %s" % ftptimeout)
+except Exception as e:
+    print("Host is unreachable")
