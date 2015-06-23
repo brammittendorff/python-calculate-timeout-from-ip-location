@@ -1,13 +1,18 @@
 # imports
-import math
-import socket
-import pprint
+import math, socket, pprint, json, urllib
 
 from ftplib import FTP
+from ftplib import FTP_TLS
 from geoip import geolite2
 
+# original ip (make sure it is a ip near your location)
+data = json.loads(urllib.urlopen("http://ip.jsontest.com/").read())
+sourceip = data["ip"]
+print("Sourceip: %s" % sourceip)
+
 # config
-remoteip = '149.172.37.26'
+remoteftpip = '216.216.32.20'
+print("Remoteip: %s" % remoteftpip)
 ftptimeout = 1
 
 # compare long lat for distance
@@ -22,12 +27,8 @@ def distance_on_unit_sphere(lat1, long1, lat2, long2):
     arc = math.acos( cos )
     return arc
 
-# original ip (make sure it is a ip near your location)
-# sourceip = socket.gethostbyname(socket.gethostname())
-sourceip = '62.197.131.200'
-
 # determine location
-remotelookup = geolite2.lookup(remoteip)
+remotelookup = geolite2.lookup(remoteftpip)
 sourcelookup = geolite2.lookup(sourceip)
 
 # calculate timeout from location
@@ -36,13 +37,22 @@ if remotelookup is not None and sourcelookup is not None :
 	# multiplier for calculating timeout
 	ftptimeout = distance*4
 
+print("Generated timeout: %s" % ftptimeout)
+
 # set timeout for fast processing
 try:
-    ftp = FTP(host=remoteip, timeout=ftptimeout)
+    ftp = FTP(host=remoteftpip, timeout=ftptimeout)
     ftp.login()
     ftp.retrlines('LIST')
     ftp.quit()
-
-    print("Generated timeout: %s" % ftptimeout)
 except Exception as e:
-    print("Host is unreachable")
+    print("The remote ftp is unreachable with error: \n%s" % e)
+
+    try:
+        print("\nTrying to connect with TLS/SSL")
+        ftps = FTP_TLS(host=remoteftpip, timeout=ftptimeout)
+        ftps.login()
+        ftps.prot_p()
+        ftps.retrlines('LIST')
+    except Exception as e:
+        print("The remote ftp is unreachable with TLS error: \n%s" % e)
